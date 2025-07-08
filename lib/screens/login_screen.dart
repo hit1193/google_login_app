@@ -168,9 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() { _isLoading = true; });
     try {
+      print('구글 로그인 성공!');
       await supabase.auth.signInWithOAuth(
         Provider.google,
-        redirectTo: 'io.supabase.flutterquickstart://login-callback/', // ✨ 실제 Redirect URL로 변경 ✨
+        redirectTo: "io.supabase.flutterquickstart://login-callback", // ✨ 실제 Redirect URL로 변경 ✨
       );
       _showSnackBar('Google 로그인 요청 완료. 브라우저/팝업을 확인하세요.');
       // Google 로그인 성공 후, main.dart의 onAuthStateChange 리스너가 처리합니다.

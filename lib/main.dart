@@ -24,6 +24,9 @@ void main() async {
 // Supabase 클라이언트 인스턴스 (다른 화면에서도 사용)
 final supabase = Supabase.instance.client;
 
+// ✨ 새로운 글로벌 네비게이터 키 추가 ✨
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -51,18 +54,19 @@ class _MyAppState extends State<MyApp> {
         await _createOrUpdateUserProfileForOAuth(user);
         print('Profile creation/update for OAuth user completed.'); // ✨ 프로필 처리 완료 로그 ✨
 
-        if (mounted) {
-          print('Navigating to HomeScreen...'); // ✨ 내비게이션 시작 로그 ✨
-          // Navigator 오류 방지를 위해 다음 프레임 콜백에서 내비게이션 실행
+        // ✨ 이 부분을 다시 확인하세요! ✨
+        // navigatorKey.currentState가 null이 아닐 때만 실행
+        if (mounted) { //(navigatorKey.currentState != null) {
+          print('Navigating to HomeScreen using navigatorKey...');
+          // ✨ 이 콜백 안에 내비게이션 코드가 있는지 확인 ✨
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Navigator.of(context, rootNavigator: true)를 사용하여 최상위 Navigator를 명시적으로 사용
-            Navigator.of(context, rootNavigator: true).pushReplacement(
+            navigatorKey.currentState!.pushReplacement(
               MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
-            print('Navigation to HomeScreen initiated.'); // ✨ 내비게이션 실행 로그 ✨
+            print('Navigation to HomeScreen initiated via navigatorKey.');
           });
         } else {
-          print('Widget is not mounted, cannot navigate to HomeScreen.'); // ✨ 위젯 마운트 상태 로그 ✨
+          print('NavigatorState is null, cannot navigate to HomeScreen.'); // 이 로그가 찍혔습니다.
         }
       } else if (event == AuthChangeEvent.signedOut) {
         print('User signed out.'); // ✨ 로그아웃 로그 추가 ✨
@@ -71,7 +75,7 @@ class _MyAppState extends State<MyApp> {
           print('Navigating to LoginScreen...'); // ✨ 내비게이션 시작 로그 ✨
           WidgetsBinding.instance.addPostFrameCallback((_) {
             // Navigator.of(context, rootNavigator: true)를 사용하여 최상위 Navigator를 명시적으로 사용
-            Navigator.of(context, rootNavigator: true).pushReplacement(
+            navigatorKey.currentState!.pushReplacement(
               MaterialPageRoute(builder: (context) => LoginScreen()),
             );
             print('Navigation to LoginScreen initiated.'); // ✨ 내비게이션 실행 로그 ✨
@@ -142,13 +146,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Supabase 로그인 데모',
-      theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.green,
+      theme: ThemeData.light().copyWith(
+        primaryColor: Colors.black,
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange.shade700, // 로그인 버튼 색상에 맞춤
-            foregroundColor: Colors.white,
+            backgroundColor: Colors.black, // 로그인 버튼 색상에 맞춤
+            foregroundColor: Colors.black,
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(

@@ -31,7 +31,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- 앱의 딥링크 스키마 설정 -->
-                <data android:scheme="io.supabase.flutterquickstart" />
+                <data android:scheme="io.supabase.flutterquickstart" android:host="login-callback" />
             </intent-filter>
 
         </activity>
