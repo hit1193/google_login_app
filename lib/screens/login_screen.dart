@@ -1,7 +1,6 @@
 // lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart'; // Google Sign-In 패키지 임포트
 
 // Supabase 클라이언트 인스턴스 (main.dart에서 초기화됨)
 final supabase = Supabase.instance.client;
@@ -61,18 +60,19 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user != null) {
         // 사용자 프로필 정보 가져오기 (users 테이블과 companies 테이블 조인)
         // 'users' 테이블에 'email' 컬럼이 있다는 전제 하에 사용
-        final userProfileResponse = await supabase
+        // .single() 메서드는 Map<String, dynamic>을 직접 반환합니다.
+        final Map<String, dynamic>? userProfileResponse = await supabase
             .from('users')
             .select('*, companies(name)') // users 테이블의 모든 컬럼과 companies 테이블의 name 컬럼 조인
             .eq('id', user.id)
-            .single()
-            .execute(); // .execute()를 사용하여 PostgrestResponse 반환
+            .maybeSingle(); // .execute() 대신 .maybeSingle() 사용 (결과가 없을 수도 있으므로)
 
         String? companyName;
-        String? companyId = userProfileResponse.data?['company_id']?.toString(); // UUID는 문자열로 처리
+        // userProfileResponse는 이제 Map<String, dynamic> 타입이므로, .data 속성에 접근할 필요가 없습니다.
+        String? companyId = userProfileResponse?['company_id']?.toString(); // 직접 'company_id' 키에 접근
 
-        if (userProfileResponse.data?['companies'] != null) {
-          companyName = userProfileResponse.data?['companies']['name'];
+        if (userProfileResponse?['companies'] != null) {
+          companyName = (userProfileResponse!['companies'] as Map<String, dynamic>)['name'];
         }
 
         final appUser = AppUser(
@@ -115,19 +115,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // 1. 회사명으로 company_id 가져오기
-      final companyResponse = await supabase
+      // .single() 메서드는 Map<String, dynamic>을 직접 반환합니다.
+      final Map<String, dynamic>? companyResponse = await supabase
           .from('companies')
           .select('id')
           .eq('name', companyName)
-          .single()
-          .execute();
+          .maybeSingle(); // 결과가 없을 수도 있으므로 .maybeSingle() 사용
 
-      if (companyResponse.data == null) {
+      // companyResponse는 이제 Map<String, dynamic> 타입이므로, .data 속성에 접근할 필요가 없습니다.
+      if (companyResponse == null) { // companyResponse.data 대신 companyResponse를 직접 사용
         _showSnackBar('존재하지 않는 회사명입니다. 정확한 회사명을 입력하거나 관리자에게 문의하세요.', isError: true);
         setState(() { _isLoading = false; });
         return;
       }
-      final String companyId = companyResponse.data!['id'];
+      final String companyId = companyResponse['id']; // companyResponse.data!['id'] 대신 직접 접근
 
       // 2. Supabase Auth에 회원가입
       final AuthResponse authRes = await supabase.auth.signUp(
@@ -168,10 +169,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() { _isLoading = true; });
     try {
-      print('구글 로그인 성공!');
       await supabase.auth.signInWithOAuth(
-        Provider.google,
-        redirectTo: "io.supabase.flutterquickstart://login-callback", // ✨ 실제 Redirect URL로 변경 ✨
+        OAuthProvider.google,
+        redirectTo: "io.supabase.flutterquickstart://login-callback",
       );
       _showSnackBar('Google 로그인 요청 완료. 브라우저/팝업을 확인하세요.');
       // Google 로그인 성공 후, main.dart의 onAuthStateChange 리스너가 처리합니다.
